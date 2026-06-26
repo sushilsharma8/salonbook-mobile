@@ -4,11 +4,12 @@ import { useFonts, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useAuthStore } from '@/lib/auth-store';
 import { getHomeRoute } from '@/lib/routing';
+import { AppSplash } from '@/components/AppSplash';
 import { ErrorBoundary as AppErrorBoundary } from '@/components/ErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
@@ -72,6 +73,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
+  const hydrated = useAuthStore((s) => s.hydrated);
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashMounted, setSplashMounted] = useState(true);
   const [fontsLoaded, fontError] = useFonts({
     Outfit_600SemiBold,
     Outfit_700Bold,
@@ -94,7 +98,13 @@ export default function RootLayout() {
     }
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) return null;
+  const ready = fontsLoaded && hydrated;
+
+  useEffect(() => {
+    if (ready) {
+      setShowSplash(false);
+    }
+  }, [ready]);
 
   return (
     <AppErrorBoundary>
@@ -122,6 +132,9 @@ export default function RootLayout() {
           </Stack>
           <StatusBar style="dark" />
         </AuthGate>
+        {splashMounted ? (
+          <AppSplash visible={showSplash} onFinish={() => setSplashMounted(false)} />
+        ) : null}
       </QueryClientProvider>
     </AppErrorBoundary>
   );
