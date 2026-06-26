@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   phone?: string | null;
   gender?: UserGender | null;
+  avatarUrl?: string | null;
 }
 
 export interface SalonListItem {
@@ -349,6 +350,15 @@ export const api = {
     token: string,
     payload: { name: string; phone: string; gender: UserGender },
   ) => request<User>('/api/users/profile', { method: 'PUT', token, body: JSON.stringify(payload) }),
+
+  uploadUserAvatar: (token: string, file: { uri: string; name: string; type: string }) => {
+    const formData = new FormData();
+    formData.append('avatar', { uri: file.uri, name: file.name, type: file.type } as unknown as Blob);
+    return uploadRequest<User>('/api/users/avatar', token, formData);
+  },
+
+  deleteUserAvatar: (token: string) =>
+    request<User>('/api/users/avatar', { method: 'DELETE', token }),
 
   // Seller
   getSellerSalon: (token: string) =>

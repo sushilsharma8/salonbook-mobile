@@ -1,188 +1,313 @@
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import { Alert, Pressable, Text, View } from 'react-native';
-import { Check, Edit2, User, X } from 'lucide-react-native';
-import { clsx } from 'clsx';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQuery } from '@tanstack/react-query';
+import { Redirect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActionSheetIOS, Alert, Platform, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Button } from '@/components/Button';
-import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
-import { api, ApiError, type UserGender } from '@/lib/api';
+import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { QuickActions } from '@/components/profile/QuickActions';
+import { EditProfileCard } from '@/components/profile/EditProfileCard';
+import { PreferencesSection } from '@/components/profile/PreferencesSection';
+import { StatsCard } from '@/components/profile/StatsCard';
+import { RecentlyVisited } from '@/components/profile/RecentlyVisited';
+import { AppFooter } from '@/components/profile/AppFooter';
+import { api, ApiError, normalizeMyBookings, type User } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 
-const GENDERS: { value: UserGender; label: string }[] = [
-  { value: 'MALE', label: 'Male' },
-  { value: 'FEMALE', label: 'Female' },
-  { value: 'OTHER', label: 'Other' },
-];
+const AVATAR_SEED_KEY = 'salonbook_avatar_seed';
+const PREFS_KEY = 'salonbook_prefs';
+
+const DEFAULT_PREFS: Record<string, boolean> = {
+  whatsappUpdates: true,
+  showPrices: true,
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, token, setAuth, logout } = useAuthStore();
+  const { user, token, hydrated, setAuth, logout } = useAuthStore();
   const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-    gender: (user?.gender || '') as UserGender | '',
+  const [avatarSeed, setAvatarSeed] = useState<string>('');
+  const [prefs, setPrefs] = useState<Record<string, boolean>>(DEFAULT_PREFS);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
+  // Load persisted preferences & avatar seed
+  useEffect(() => {
+    (async () => {
+      const [seed, prefsRaw] = await Promise.all([
+        AsyncStorage.getItem(AVATAR_SEED_KEY),
+        AsyncStorage.getItem(PREFS_KEY),
+      ]);
+      if (seed) setAvatarSeed(seed);
+      if (prefsRaw) {
+        try {
+          setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(prefsRaw) });
+        } catch {}
+      }
+    })();
+  }, []);
+
+  // Initialise avatar seed from user name when not yet set
+  useEffect(() => {
+    if (user && !avatarSeed) {
+      const seed = user.name || 'default';
+      setAvatarSeed(seed);
+      AsyncStorage.setItem(AVATAR_SEED_KEY, seed).catch(() => {});
+    }
+  }, [user, avatarSeed]);
+
+  const handleAvatarSeedChange = useCallback(async (seed: string) => {
+    setAvatarSeed(seed);
+    await AsyncStorage.setItem(AVATAR_SEED_KEY, seed).catch(() => {});
+  }, []);
+
+  const handlePrefToggle = useCallback(async (key: string, value: boolean) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: value };
+      AsyncStorage.setItem(PREFS_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const pickAndUploadAvatar = useCallback(
+    async (source: 'camera' | 'library') => {
+      if (!token) return;
+
+      let pickerResult: ImagePicker.ImagePickerResult;
+
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission required', 'Camera access is needed to take a photo.');
+          return;
+        }
+        pickerResult = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission required', 'Photo library access is needed to choose a photo.');
+          return;
+        }
+        pickerResult = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 1,
+        });
+      }
+
+      if (pickerResult.canceled || !pickerResult.assets?.length) return;
+
+      const asset = pickerResult.assets[0];
+
+      setAvatarUploading(true);
+      try {
+        // Resize + compress to max 512px, JPEG 0.7 quality
+        const manipulated = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          [{ resize: { width: 512, height: 512 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
+        );
+
+        const updated = await api.uploadUserAvatar(token, {
+          uri: manipulated.uri,
+          name: `avatar-${Date.now()}.jpg`,
+          type: 'image/jpeg',
+        });
+
+        await setAuth(updated, token);
+      } catch (err) {
+        Alert.alert('Upload failed', err instanceof ApiError ? err.message : 'Could not upload photo.');
+      } finally {
+        setAvatarUploading(false);
+      }
+    },
+    [token, setAuth],
+  );
+
+  const handleRemoveAvatar = useCallback(async () => {
+    if (!token) return;
+    setAvatarUploading(true);
+    try {
+      const updated = await api.deleteUserAvatar(token);
+      await setAuth(updated, token);
+    } catch (err) {
+      Alert.alert('Error', err instanceof ApiError ? err.message : 'Could not remove photo.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  }, [token, setAuth]);
+
+  const handleAvatarPress = useCallback(() => {
+    const hasPhoto = !!user?.avatarUrl;
+    const options = hasPhoto
+      ? ['Take Photo', 'Choose from Library', 'Remove Photo', 'Cancel']
+      : ['Take Photo', 'Choose from Library', 'Cancel'];
+    const cancelIndex = options.length - 1;
+    const destructiveIndex = hasPhoto ? 2 : undefined;
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: cancelIndex,
+          destructiveButtonIndex: destructiveIndex,
+          title: 'Profile Photo',
+        },
+        (index) => {
+          if (index === 0) pickAndUploadAvatar('camera');
+          else if (index === 1) pickAndUploadAvatar('library');
+          else if (hasPhoto && index === 2) handleRemoveAvatar();
+        },
+      );
+    } else {
+      const androidOptions: { text: string; onPress?: () => void; style?: 'destructive' | 'cancel' }[] = [
+        { text: 'Take Photo', onPress: () => pickAndUploadAvatar('camera') },
+        { text: 'Choose from Library', onPress: () => pickAndUploadAvatar('library') },
+      ];
+      if (hasPhoto) {
+        androidOptions.push({ text: 'Remove Photo', style: 'destructive', onPress: handleRemoveAvatar });
+      }
+      androidOptions.push({ text: 'Cancel', style: 'cancel' });
+      Alert.alert('Profile Photo', undefined, androidOptions);
+    }
+  }, [user, pickAndUploadAvatar, handleRemoveAvatar]);
+
+  // Bookings data
+  const { data: bookingsData } = useQuery({
+    queryKey: ['my-bookings', token],
+    queryFn: () => api.getMyBookings(token!).then(normalizeMyBookings),
+    enabled: !!token,
+    staleTime: 60_000,
   });
 
-  if (!user || !token) return null;
+  const bookings = bookingsData?.bookings ?? [];
+  const reviews = bookingsData?.reviews ?? [];
 
-  const handleSave = async () => {
-    if (!form.gender) {
-      Alert.alert('Gender required', 'Please select your gender for accurate pricing.');
-      return;
-    }
-    setSaving(true);
-    try {
-      const updated = await api.updateProfile(token, {
-        name: form.name.trim(),
-        phone: form.phone,
-        gender: form.gender,
-      });
-      await setAuth(updated, token);
+  const totalBookings = bookings.length;
+  const totalReviews = reviews.length;
+  const completed = bookings.filter((b) => b.status === 'COMPLETED').length;
+  const cancelled = bookings.filter((b) => b.status === 'CANCELLED').length;
+  const completedBookings = bookings.filter((b) => b.status === 'COMPLETED');
+
+  const handleSaved = useCallback(
+    async (updated: User) => {
+      await setAuth(updated, token!);
       setEditing(false);
-      Alert.alert('Success', 'Profile updated');
-    } catch (err) {
-      Alert.alert('Error', err instanceof ApiError ? err.message : 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
+      Alert.alert('Saved', 'Your profile has been updated.');
+    },
+    [token, setAuth],
+  );
 
   const handleLogout = async () => {
     await logout();
     router.replace('/(tabs)/explore');
   };
 
+  if (!hydrated) return <Screen loading />;
+  if (!user || !token) return <Redirect href="/login" />;
+
   return (
     <Screen contentClassName="py-4">
-      <View className="bg-white rounded-3xl p-6 border border-stone-200/60">
-        <View className="flex-row items-center justify-between mb-6">
-          <View className="flex-row items-center gap-4">
-            <View className="w-14 h-14 bg-stone-100 rounded-full items-center justify-center border border-stone-200">
-              <User size={28} color="#a8a29e" />
-            </View>
-            <View>
-              <Text className="text-xl font-display font-bold text-stone-900">Profile</Text>
-              <Text className="text-stone-500 text-sm">Your personal information</Text>
-            </View>
-          </View>
-          {!editing ? (
-            <Pressable
-              onPress={() => setEditing(true)}
-              className="flex-row items-center gap-1 px-4 py-2 bg-stone-100 rounded-xl"
-            >
-              <Edit2 size={16} color="#1c1917" />
-              <Text className="font-bold text-stone-900 text-sm">Edit</Text>
-            </Pressable>
-          ) : (
-            <View className="flex-row gap-2">
-              <Pressable
-                onPress={() => {
-                  setEditing(false);
-                  setForm({
-                    name: user.name,
-                    phone: user.phone || '',
-                    gender: user.gender || '',
-                  });
-                }}
-                className="p-2 bg-stone-100 rounded-xl"
-              >
-                <X size={18} color="#57534e" />
-              </Pressable>
-              <Pressable
-                onPress={handleSave}
-                disabled={saving}
-                className="p-2 bg-stone-900 rounded-xl"
-              >
-                <Check size={18} color="#fff" />
-              </Pressable>
-            </View>
-          )}
-        </View>
+      {editing ? (
+        <EditProfileCard
+          user={user}
+          token={token}
+          avatarSeed={avatarSeed}
+          onAvatarSeedChange={handleAvatarSeedChange}
+          onSaved={handleSaved}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <ProfileHeader
+          user={user}
+          avatarSeed={avatarSeed}
+          totalBookings={totalBookings}
+          totalReviews={totalReviews}
+          onEditPress={() => setEditing(true)}
+          onAvatarPress={handleAvatarPress}
+          avatarUploading={avatarUploading}
+        />
+      )}
 
-        <View className="gap-5">
-          <View>
-            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 ml-1">
-              Full Name
-            </Text>
-            {editing ? (
-              <Input value={form.name} onChangeText={(name) => setForm({ ...form, name })} />
-            ) : (
-              <View className="bg-stone-50 px-5 py-4 rounded-2xl border border-stone-100">
-                <Text className="text-lg font-medium text-stone-900">{user.name}</Text>
-              </View>
-            )}
-          </View>
+      {!editing && (
+        <>
+          <QuickActions />
 
-          <View>
-            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 ml-1">
-              Email
-            </Text>
-            <View className="bg-stone-50 px-5 py-4 rounded-2xl border border-stone-100 opacity-70">
-              <Text className="text-lg font-medium text-stone-500">{user.email}</Text>
+          <StatsCard
+            totalBookings={totalBookings}
+            completed={completed}
+            cancelled={cancelled}
+            reviews={totalReviews}
+          />
+
+          <RecentlyVisited completedBookings={completedBookings} />
+
+          <PreferencesSection prefs={prefs} onToggle={handlePrefToggle} />
+
+          {/* Profile info (collapsed view) */}
+          <View className="bg-white rounded-3xl border border-stone-200/60 mb-4 overflow-hidden">
+            <View className="px-6 py-4 border-b border-stone-100">
+              <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                Account Details
+              </Text>
             </View>
-          </View>
-
-          <View>
-            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 ml-1">
-              Phone
-            </Text>
-            {editing ? (
-              <Input
-                keyboardType="phone-pad"
-                value={form.phone}
-                onChangeText={(phone) => setForm({ ...form, phone: phone.replace(/\D/g, '').slice(0, 10) })}
+            <View className="px-6 py-4 gap-4">
+              <InfoRow label="Email" value={user.email} />
+              <View className="h-px bg-stone-100" />
+              <InfoRow
+                label="Phone"
+                value={user.phone ? `+91 ${user.phone}` : 'Not added'}
+                muted={!user.phone}
               />
-            ) : (
-              <View className="bg-stone-50 px-5 py-4 rounded-2xl border border-stone-100">
-                <Text className="text-lg font-medium text-stone-900">
-                  {user.phone ? `+91 ${user.phone}` : '—'}
-                </Text>
-              </View>
-            )}
+              <View className="h-px bg-stone-100" />
+              <InfoRow
+                label="Gender"
+                value={user.gender
+                  ? user.gender.charAt(0) + user.gender.slice(1).toLowerCase()
+                  : 'Not set'}
+                muted={!user.gender}
+              />
+            </View>
           </View>
 
-          <View>
-            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 ml-1">
-              Gender
-            </Text>
-            {editing ? (
-              <View className="flex-row gap-2">
-                {GENDERS.map((g) => (
-                  <Pressable
-                    key={g.value}
-                    onPress={() => setForm({ ...form, gender: g.value })}
-                    className={clsx(
-                      'flex-1 py-3 rounded-xl border items-center',
-                      form.gender === g.value
-                        ? 'bg-amber-50 border-amber-300'
-                        : 'bg-white border-stone-200',
-                    )}
-                  >
-                    <Text className="font-bold text-sm text-stone-900">{g.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            ) : (
-              <View className="bg-stone-50 px-5 py-4 rounded-2xl border border-stone-100">
-                <Text className="text-lg font-medium text-stone-900 capitalize">
-                  {user.gender?.toLowerCase() || '—'}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
+          <AppFooter />
 
-      <Button
-        label="Log out"
-        variant="outline"
-        fullWidth
-        className="mt-6"
-        onPress={handleLogout}
-      />
+          <Button
+            label="Log out"
+            variant="outline"
+            fullWidth
+            className="mb-2"
+            onPress={handleLogout}
+          />
+        </>
+      )}
     </Screen>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  muted = false,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <View className="flex-row items-center justify-between">
+      <Text className="text-sm font-semibold text-stone-500">{label}</Text>
+      <Text className={`text-sm font-medium ${muted ? 'text-stone-400' : 'text-stone-900'}`}>
+        {value}
+      </Text>
+    </View>
   );
 }

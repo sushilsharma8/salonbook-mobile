@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -33,6 +33,7 @@ function buildWhatsAppShare(booking: Booking) {
 export default function BookingsScreen() {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const hydrated = useAuthStore((s) => s.hydrated);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('upcoming');
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
@@ -101,16 +102,8 @@ export default function BookingsScreen() {
 
   const hasReviewed = (salonId: string) => reviews.some((r) => r.salonId === salonId);
 
-  if (!user || !token) {
-    return (
-      <Screen>
-        <View className="items-center py-20">
-          <Text className="text-stone-900 font-semibold mb-2">Session required</Text>
-          <Text className="text-stone-500">Please log in again.</Text>
-        </View>
-      </Screen>
-    );
-  }
+  if (!hydrated) return <Screen loading />;
+  if (!user || !token) return <Redirect href="/login" />;
 
   if (isLoading) return <Screen loading />;
 

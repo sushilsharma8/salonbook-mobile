@@ -99,14 +99,61 @@ lib/
 components/         # Shared UI
 ```
 
-## Scripts
+## Commands
+
+### Development
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Expo dev server |
-| `npm run ios` | Open iOS simulator |
-| `npm run android` | Open Android emulator |
-| `npm run lint` | TypeScript check (`tsc --noEmit`) |
+| `npm install` | Install all dependencies |
+| `npm start` | Start Expo dev server (scan QR with Expo Go) |
+| `npm start -- --clear` | Start with cleared Metro bundler cache |
+| `npm run ios` | Build and open on iOS Simulator |
+| `npm run ios:device` | Build and open on iOS Device |
+| `npm run android` | Build and open on Android Emulator |
+| `npx expo run:android` | Build and open on Android Device |
+| `npm run web` | Start web version in browser |
+| `npm run lint` | TypeScript type-check (`tsc --noEmit`) |
+
+### Expo CLI (run via `npx`)
+
+| Command | Description |
+|---------|-------------|
+| `npx expo start --tunnel` | Use ngrok tunnel (physical device on different network) |
+| `npx expo start --offline` | Start in offline mode |
+| `npx expo start --go` | Force Expo Go mode (no dev client) |
+| `npx expo start --dev-client` | Force custom dev client mode |
+| `npx expo install` | Install Expo-compatible package versions |
+| `npx expo doctor` | Check for dependency version mismatches |
+| `npx expo prebuild` | Generate native `ios/` and `android/` folders |
+| `npx expo prebuild --clean` | Regenerate native folders from scratch |
+
+### EAS Build & Submit
+
+> Requires `npm install -g eas-cli` and an [Expo account](https://expo.dev).
+
+| Command | Description |
+|---------|-------------|
+| `eas build --platform ios` | Build iOS app in EAS cloud |
+| `eas build --platform android` | Build Android APK/AAB in EAS cloud |
+| `eas build --platform all` | Build both platforms |
+| `eas build --profile preview --platform android` | Build preview APK for testing |
+| `eas build --local --platform ios` | Build locally (requires Xcode) |
+| `eas submit --platform ios` | Submit iOS build to App Store |
+| `eas submit --platform android` | Submit Android build to Play Store |
+| `eas update` | Push OTA JS update (no app store required) |
+| `eas update --branch preview` | Push update to a specific branch |
+| `eas credentials` | Manage signing credentials |
+| `eas whoami` | Check currently logged-in EAS account |
+
+### Native / Cache
+
+| Command | Description |
+|---------|-------------|
+| `npx react-native start --reset-cache` | Reset Metro cache |
+| `watchman watch-del-all` | Clear Watchman file-watch state |
+| `cd ios && pod install` | Install CocoaPods (after `expo prebuild`) |
+| `cd android && ./gradlew clean` | Clean Android Gradle build |
 
 ## Design
 

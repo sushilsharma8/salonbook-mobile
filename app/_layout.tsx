@@ -26,31 +26,23 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
-  const root = segments[0] as string | undefined;
-  const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
-  const inAuthGroup = root === 'login' || root === 'register';
-  const inProtectedRoute =
-    root === '(seller)' ||
-    root === '(admin)' ||
-    root === 'admin' ||
-    root === 'booking' ||
-    tabSegment === 'bookings' ||
-    tabSegment === 'profile';
-  const roleMismatch =
-    !!user &&
-    ((user.role === 'CUSTOMER' && (root === '(seller)' || root === '(admin)' || root === 'admin')) ||
-      (user.role === 'SELLER' && root === '(tabs)') ||
-      (user.role === 'ADMIN' && (root === '(tabs)' || root === '(seller)')));
 
   useEffect(() => {
     if (!hydrated) return;
 
+    const root = segments[0] as string | undefined;
+    const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
+    const inAuthGroup = root === 'login' || root === 'register';
+
     if (!user) {
-      if (root === '(seller)' || root === '(admin)' || root === 'admin' || root === 'booking') {
-        router.replace('/login');
-        return;
-      }
-      if (tabSegment === 'bookings' || tabSegment === 'profile') {
+      if (
+        root === '(seller)' ||
+        root === '(admin)' ||
+        root === 'admin' ||
+        root === 'booking' ||
+        tabSegment === 'bookings' ||
+        tabSegment === 'profile'
+      ) {
         router.replace('/login');
       }
       return;
@@ -75,17 +67,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       router.replace('/(admin)');
       return;
     }
-
-    if (root === 'booking' && user.role === 'CUSTOMER') {
-      // Booking action screen handles its own messaging
-    }
   }, [user, hydrated, segments, router]);
 
-  if (!hydrated) return null;
-  if (!user && inProtectedRoute) return null;
-  if (user && inAuthGroup) return null;
-  if (roleMismatch) return null;
-
+  // Always render children so the navigation tree stays mounted.
+  // Individual protected screens handle the unauthenticated / loading state themselves.
   return <>{children}</>;
 }
 
