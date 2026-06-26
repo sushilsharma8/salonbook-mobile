@@ -212,7 +212,17 @@ export default function ProfileScreen() {
   };
 
   if (!hydrated) return <Screen loading />;
-  if (!user || !token) return <Screen loading />;
+  if (!user || !token) {
+    return (
+      <Screen>
+        <View className="items-center py-20 px-4">
+          <Text className="text-2xl font-display font-bold text-stone-900 mb-2 text-center">Your profile</Text>
+          <Text className="text-stone-500 text-center mb-6">Sign in to manage your account and preferences.</Text>
+          <Button label="Sign in" onPress={() => router.push('/login')} />
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen contentClassName="py-4">

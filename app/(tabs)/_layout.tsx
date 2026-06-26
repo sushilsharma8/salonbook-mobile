@@ -1,7 +1,12 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Calendar, Search, User } from 'lucide-react-native';
+import { useAuthStore } from '@/lib/auth-store';
 
 export default function TabLayout() {
+  const router = useRouter();
+  const { user, hydrated } = useAuthStore();
+  const authed = hydrated && !!user;
+
   return (
     <Tabs
       screenOptions={{
@@ -29,6 +34,14 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="bookings"
+        listeners={{
+          tabPress: (e) => {
+            if (!authed) {
+              e.preventDefault();
+              router.push('/login');
+            }
+          },
+        }}
         options={{
           title: 'Bookings',
           tabBarIcon: ({ color, size }) => <Calendar color={color} size={size} />,
@@ -36,6 +49,14 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
+        listeners={{
+          tabPress: (e) => {
+            if (!authed) {
+              e.preventDefault();
+              router.push('/login');
+            }
+          },
+        }}
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,

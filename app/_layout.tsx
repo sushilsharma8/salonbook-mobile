@@ -31,7 +31,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!hydrated) return;
 
     const root = segments[0] as string | undefined;
-    const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
     const inAuthGroup = root === 'login' || root === 'register';
 
     if (!root || root === 'index') {
@@ -40,16 +39,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
 
     if (!user) {
-      if (
-        root === '(seller)' ||
-        root === '(admin)' ||
-        root === 'admin' ||
-        root === 'booking' ||
-        tabSegment === 'bookings' ||
-        tabSegment === 'profile'
-      ) {
+      if (root === '(seller)' || root === '(admin)' || root === 'admin' || root === 'booking') {
         router.replace('/login');
       }
+      // ponytail: tab routes handle auth via push('/login') on-screen — replace here unmounts Tabs under Fabric
       return;
     }
 
@@ -74,8 +67,6 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [user, hydrated, segments, router]);
 
-  // Always render children so the navigation tree stays mounted.
-  // Individual protected screens handle the unauthenticated / loading state themselves.
   return <>{children}</>;
 }
 
@@ -110,24 +101,24 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthGate>
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fafaf9' } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(seller)" />
-          <Stack.Screen name="(admin)" />
-          <Stack.Screen name="login" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="register" options={{ presentation: 'modal' }} />
-          <Stack.Screen
-            name="salon/[id]"
-            options={{ headerShown: true, headerTitle: '', headerTintColor: '#1c1917' }}
-          />
-          <Stack.Screen
-            name="admin/salon/[id]"
-            options={{ headerShown: true, headerTintColor: '#1c1917' }}
-          />
-          <Stack.Screen
-            name="booking/action/[token]"
-            options={{ headerShown: true, headerTintColor: '#1c1917' }}
-          />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(seller)" />
+            <Stack.Screen name="(admin)" />
+            <Stack.Screen name="login" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="register" options={{ presentation: 'modal' }} />
+            <Stack.Screen
+              name="salon/[id]"
+              options={{ headerShown: true, headerTitle: '', headerTintColor: '#1c1917' }}
+            />
+            <Stack.Screen
+              name="admin/salon/[id]"
+              options={{ headerShown: true, headerTintColor: '#1c1917' }}
+            />
+            <Stack.Screen
+              name="booking/action/[token]"
+              options={{ headerShown: true, headerTintColor: '#1c1917' }}
+            />
           </Stack>
           <StatusBar style="dark" />
         </AuthGate>
