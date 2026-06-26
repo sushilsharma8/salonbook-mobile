@@ -31,25 +31,26 @@ function buildWhatsAppShare(booking: Booking) {
 }
 
 export default function BookingsScreen() {
-  const token = useAuthStore((s) => s.token)!;
-  const user = useAuthStore((s) => s.user)!;
+  const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('upcoming');
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['my-bookings', token],
-    queryFn: () => api.getMyBookings(token).then(normalizeMyBookings),
+    queryFn: () => api.getMyBookings(token!).then(normalizeMyBookings),
+    enabled: !!token,
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (id: string) => api.updateBookingStatus(token, id, 'CANCELLED'),
+    mutationFn: (id: string) => api.updateBookingStatus(token!, id, 'CANCELLED'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['my-bookings'] }),
   });
 
   const reviewMutation = useMutation({
     mutationFn: (payload: { salonId: string; rating: number; comment: string }) =>
-      api.createReview(token, payload),
+      api.createReview(token!, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       setReviewTarget(null);
@@ -88,7 +89,7 @@ export default function BookingsScreen() {
               .filter(Boolean)
               .join(', ');
             const msg =
-              `Hello ${booking.salon.owner?.name || 'there'}, ${user.name} has cancelled their booking` +
+              `Hello ${booking.salon.owner?.name || 'there'}, ${user?.name ?? 'A customer'} has cancelled their booking` +
               `${services ? ` for ${services}` : ''} at ${booking.salon.name}` +
               ` on ${formatBookingTime(booking.startTime, 'MMM d, yyyy')} at ${formatBookingTime(booking.startTime, 'h:mm a')}.`;
             Linking.openURL(`https://wa.me/${phoneNum}?text=${encodeURIComponent(msg)}`);
@@ -99,6 +100,17 @@ export default function BookingsScreen() {
   };
 
   const hasReviewed = (salonId: string) => reviews.some((r) => r.salonId === salonId);
+
+  if (!user || !token) {
+    return (
+      <Screen>
+        <View className="items-center py-20">
+          <Text className="text-stone-900 font-semibold mb-2">Session required</Text>
+          <Text className="text-stone-500">Please log in again.</Text>
+        </View>
+      </Screen>
+    );
+  }
 
   if (isLoading) return <Screen loading />;
 

@@ -203,7 +203,7 @@ export default function SalonDetailScreen() {
         <View className="bg-white border-b border-stone-200/60">
           <Image
             source={{ uri: images[Math.min(selectedImageIndex, images.length - 1)] }}
-            className="w-full h-56"
+            style={{ width: '100%', height: 224 }}
             contentFit="cover"
           />
           {images.length > 1 ? (
@@ -212,9 +212,14 @@ export default function SalonDetailScreen() {
                 <Pressable key={index} onPress={() => setSelectedImageIndex(index)}>
                   <Image
                     source={{ uri: image }}
-                    className={`w-16 h-16 rounded-xl mr-2 border-2 ${
-                      selectedImageIndex === index ? 'border-stone-900' : 'border-stone-200'
-                    }`}
+                    style={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: 12,
+                      marginRight: 8,
+                      borderWidth: 2,
+                      borderColor: selectedImageIndex === index ? '#1c1917' : '#e7e5e4',
+                    }}
                     contentFit="cover"
                   />
                 </Pressable>

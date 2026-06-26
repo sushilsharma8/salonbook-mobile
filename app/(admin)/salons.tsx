@@ -7,12 +7,15 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 
 export default function AdminSalonsScreen() {
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
 
   const { data: salons = [], isLoading, error, refetch } = useQuery({
     queryKey: ['admin-salons', token],
-    queryFn: () => api.getAdminSalons(token),
+    queryFn: () => api.getAdminSalons(token!),
+    enabled: !!token,
   });
+
+  if (!token) return <Screen loading />;
 
   if (isLoading) return <Screen loading />;
 

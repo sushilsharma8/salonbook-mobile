@@ -11,21 +11,24 @@ import { isBookingUpcoming } from '@/lib/bookingTime';
 type Tab = 'active' | 'past';
 
 export default function SellerBookingsScreen() {
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>('active');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const { data: bookings = [], isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['seller-bookings', token],
-    queryFn: () => api.getSellerBookings(token),
+    queryFn: () => api.getSellerBookings(token!),
+    enabled: !!token,
   });
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
-      api.updateBookingStatus(token, id, status),
+      api.updateBookingStatus(token!, id, status),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['seller-bookings'] }),
   });
+
+  if (!token) return <Screen loading />;
 
   const active = useMemo(
     () => bookings.filter((b) => isBookingUpcoming(b.startTime) && b.status !== 'CANCELLED'),

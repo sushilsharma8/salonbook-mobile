@@ -9,7 +9,7 @@ import { api, ApiError, type AdminUser } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 
 export default function AdminUsersScreen() {
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
   const [resetUser, setResetUser] = useState<AdminUser | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -18,11 +18,12 @@ export default function AdminUsersScreen() {
 
   const { data: users = [], isLoading, error, refetch } = useQuery({
     queryKey: ['admin-users', token],
-    queryFn: () => api.getAdminUsers(token),
+    queryFn: () => api.getAdminUsers(token!),
+    enabled: !!token,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.deleteAdminUser(token, id),
+    mutationFn: (id: string) => api.deleteAdminUser(token!, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
@@ -30,13 +31,13 @@ export default function AdminUsersScreen() {
   });
 
   const reactivateMutation = useMutation({
-    mutationFn: (id: string) => api.reactivateAdminUser(token, id),
+    mutationFn: (id: string) => api.reactivateAdminUser(token!, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-users'] }),
   });
 
   const resetMutation = useMutation({
     mutationFn: ({ id, password }: { id: string; password: string }) =>
-      api.resetAdminUserPassword(token, id, password),
+      api.resetAdminUserPassword(token!, id, password),
     onSuccess: () => {
       setResetUser(null);
       setNewPassword('');
@@ -59,6 +60,8 @@ export default function AdminUsersScreen() {
       },
     ]);
   };
+
+  if (!token) return <Screen loading />;
 
   const handleReset = () => {
     if (!resetUser) return;

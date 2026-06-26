@@ -25,7 +25,7 @@ type VariantDraft = { targetGender: ServiceTargetGender; price: string; duration
 
 export default function AdminSalonManageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -44,8 +44,8 @@ export default function AdminSalonManageScreen() {
 
   const { data: salon, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-salon', id, token],
-    queryFn: () => api.getAdminSalon(token, id!),
-    enabled: !!id,
+    queryFn: () => api.getAdminSalon(token!, id!),
+    enabled: !!id && !!token,
   });
 
   const invalidate = () => {
@@ -55,7 +55,7 @@ export default function AdminSalonManageScreen() {
 
   const statusMutation = useMutation({
     mutationFn: ({ bookingId, status }: { bookingId: string; status: BookingStatus }) =>
-      api.updateBookingStatus(token, bookingId, status),
+      api.updateBookingStatus(token!, bookingId, status),
     onSuccess: () => invalidate(),
   });
 
@@ -73,7 +73,7 @@ export default function AdminSalonManageScreen() {
       return;
     }
     try {
-      await api.addAdminSalonService(token, id!, { name: serviceName.trim(), variants });
+      await api.addAdminSalonService(token!, id!, { name: serviceName.trim(), variants });
       setShowServiceForm(false);
       setServiceName('');
       setServiceVariants([
@@ -93,7 +93,7 @@ export default function AdminSalonManageScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          await api.deleteAdminSalonService(token, id!, service.id);
+          await api.deleteAdminSalonService(token!, id!, service.id);
           invalidate();
         },
       },
@@ -103,7 +103,7 @@ export default function AdminSalonManageScreen() {
   const addStaff = async () => {
     if (!staffName.trim()) return;
     try {
-      await api.addAdminSalonStaff(token, id!, {
+      await api.addAdminSalonStaff(token!, id!, {
         name: staffName.trim(),
         skills: staffSkills.trim() || undefined,
         gender: staffGender,
@@ -124,7 +124,7 @@ export default function AdminSalonManageScreen() {
         text: 'Remove',
         style: 'destructive',
         onPress: async () => {
-          await api.deleteAdminSalonStaff(token, id!, staffId);
+          await api.deleteAdminSalonStaff(token!, id!, staffId);
           invalidate();
         },
       },
@@ -139,6 +139,8 @@ export default function AdminSalonManageScreen() {
       setUpdatingId(null);
     }
   };
+
+  if (!token) return <Screen loading />;
 
   if (isLoading) return <Screen loading />;
 

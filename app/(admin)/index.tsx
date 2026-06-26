@@ -7,17 +7,21 @@ import { useAuthStore } from '@/lib/auth-store';
 import { formatBookingTime } from '@/lib/bookingTime';
 
 export default function AdminDashboardScreen() {
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['admin-stats', token],
-    queryFn: () => api.getAdminStats(token),
+    queryFn: () => api.getAdminStats(token!),
+    enabled: !!token,
   });
 
   const { data: activity = [] } = useQuery({
     queryKey: ['admin-activity', token],
-    queryFn: () => api.getAdminActivity(token),
+    queryFn: () => api.getAdminActivity(token!),
+    enabled: !!token,
   });
+
+  if (!token) return <Screen loading />;
 
   if (statsLoading) return <Screen loading />;
 

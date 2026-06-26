@@ -185,11 +185,39 @@ export class ApiError extends Error {
   }
 }
 
+const DEV_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2'];
+
 export function resolveImageUrl(baseUrl: string, url: string): string {
   if (!url) return '';
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const raw = url.trim();
   const base = baseUrl.replace(/\/$/, '');
-  return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
+
+  if (raw.startsWith('//')) {
+    return `https:${raw}`;
+  }
+
+  const httpMatch = raw.match(/^(https?):\/\/([^/]+)(.*)$/i);
+  if (httpMatch) {
+    let [, protocol, host, rest] = httpMatch;
+    const hostname = host.split(':')[0];
+
+    // Dev/emulator hosts won't resolve on a real device — rewrite to the configured API host.
+    if (DEV_HOSTS.includes(hostname)) {
+      const baseMatch = base.match(/^(https?):\/\/([^/]+)/i);
+      if (baseMatch) {
+        protocol = baseMatch[1];
+        host = baseMatch[2];
+      }
+    }
+
+    if (protocol.toLowerCase() === 'http' && base.startsWith('https://')) {
+      protocol = 'https';
+    }
+
+    return `${protocol}://${host}${rest}`;
+  }
+
+  return raw.startsWith('/') ? `${base}${raw}` : `${base}/${raw}`;
 }
 
 export function parseSalonImages(images: string | null | undefined, baseUrl: string): string[] {
@@ -230,6 +258,9 @@ async function request<T>(
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new ApiError('Session expired. Please log in again.', 401);
+    }
     throw new ApiError(data.error || `Request failed (${res.status})`, res.status);
   }
 

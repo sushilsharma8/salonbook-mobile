@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "salonbook-mobile",
+    "name": "SalonBook",
     "slug": "salonbook-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "package": "com.sushilsharma.salonbookmobile"
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +39,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4f7ac830-57d7-487c-a5c5-96df8c09d64c"
+      }
     }
   }
 }

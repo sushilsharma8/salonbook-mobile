@@ -22,7 +22,11 @@ export function SalonCard({ salon }: SalonCardProps) {
     <Link href={`/salon/${salon.id}`} asChild>
       <Pressable className="bg-white rounded-3xl overflow-hidden border border-stone-200/60 mb-6 active:opacity-95">
         <View className="relative h-56 bg-stone-100">
-          <Image source={{ uri: imageUrl }} className="w-full h-full" contentFit="cover" />
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: '100%', height: '100%' }}
+            contentFit="cover"
+          />
           <View
             className={`absolute top-3 left-3 flex-row items-center gap-1.5 px-2.5 py-1 rounded-full border ${
               openNow

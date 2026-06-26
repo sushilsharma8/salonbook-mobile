@@ -10,19 +10,28 @@ import { useAuthStore } from '@/lib/auth-store';
 import { isBookingUpcoming, isPendingBookingActionable } from '@/lib/bookingTime';
 
 export default function SellerDashboardScreen() {
-  const token = useAuthStore((s) => s.token)!;
-  const user = useAuthStore((s) => s.user)!;
+  const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
 
   const { data: salon, isLoading, error, refetch } = useQuery({
     queryKey: ['seller-salon', token],
-    queryFn: () => api.getSellerSalon(token),
+    queryFn: () => api.getSellerSalon(token!),
+    enabled: !!token,
   });
 
   const { data: bookings = [] } = useQuery({
     queryKey: ['seller-bookings', token],
-    queryFn: () => api.getSellerBookings(token),
-    enabled: !!salon,
+    queryFn: () => api.getSellerBookings(token!),
+    enabled: !!salon && !!token,
   });
+
+  if (!user || !token) {
+    return (
+      <Screen>
+        <Text className="text-center text-stone-500 py-20">Please log in to continue.</Text>
+      </Screen>
+    );
+  }
 
   if (isLoading) return <Screen loading />;
 

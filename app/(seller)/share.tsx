@@ -11,14 +11,15 @@ import { buildSalonShareUrl } from '@/lib/routing';
 import { getDefaultApiUrl } from '@/lib/theme';
 
 export default function SellerShareScreen() {
-  const token = useAuthStore((s) => s.token)!;
+  const token = useAuthStore((s) => s.token);
 
   const { data: salon, isLoading } = useQuery({
     queryKey: ['seller-salon', token],
-    queryFn: () => api.getSellerSalon(token),
+    queryFn: () => api.getSellerSalon(token!),
+    enabled: !!token,
   });
 
-  if (isLoading) return <Screen loading />;
+  if (!token || isLoading) return <Screen loading />;
 
   if (!salon) {
     return (

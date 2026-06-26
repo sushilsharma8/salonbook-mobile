@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useAuthStore } from '@/lib/auth-store';
 import { getHomeRoute } from '@/lib/routing';
+import { ErrorBoundary as AppErrorBoundary } from '@/components/ErrorBoundary';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,13 +26,24 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuthStore();
   const segments = useSegments();
   const router = useRouter();
+  const root = segments[0] as string | undefined;
+  const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
+  const inAuthGroup = root === 'login' || root === 'register';
+  const inProtectedRoute =
+    root === '(seller)' ||
+    root === '(admin)' ||
+    root === 'admin' ||
+    root === 'booking' ||
+    tabSegment === 'bookings' ||
+    tabSegment === 'profile';
+  const roleMismatch =
+    !!user &&
+    ((user.role === 'CUSTOMER' && (root === '(seller)' || root === '(admin)' || root === 'admin')) ||
+      (user.role === 'SELLER' && root === '(tabs)') ||
+      (user.role === 'ADMIN' && (root === '(tabs)' || root === '(seller)')));
 
   useEffect(() => {
     if (!hydrated) return;
-
-    const root = segments[0] as string | undefined;
-    const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
-    const inAuthGroup = root === 'login' || root === 'register';
 
     if (!user) {
       if (root === '(seller)' || root === '(admin)' || root === 'admin' || root === 'booking') {
@@ -69,6 +81,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [user, hydrated, segments, router]);
 
+  if (!hydrated) return null;
+  if (!user && inProtectedRoute) return null;
+  if (user && inAuthGroup) return null;
+  if (roleMismatch) return null;
+
   return <>{children}</>;
 }
 
@@ -99,9 +116,10 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <StatusBar style="dark" />
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthGate>
+          <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fafaf9' } }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
@@ -121,8 +139,9 @@ export default function RootLayout() {
             name="booking/action/[token]"
             options={{ headerShown: true, headerTintColor: '#1c1917' }}
           />
-        </Stack>
-      </AuthGate>
-    </QueryClientProvider>
+          </Stack>
+        </AuthGate>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
