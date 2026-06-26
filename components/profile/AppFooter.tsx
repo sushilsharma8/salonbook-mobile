@@ -2,8 +2,13 @@ import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { Pressable, Text, View } from 'react-native';
 import { ExternalLink, HeartHandshake, Lock, FileText } from 'lucide-react-native';
+import { getDefaultApiUrl } from '@/lib/theme';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
+const WEB_BASE = getDefaultApiUrl();
+const SUPPORT_WHATSAPP =
+  'https://wa.me/918283992627?text=' +
+  encodeURIComponent('Hi SalonBook team, I need help with...');
 
 interface FooterLinkProps {
   icon: React.ReactNode;
@@ -38,23 +43,19 @@ export function AppFooter() {
         <FooterLink
           icon={<FileText size={16} color="#57534e" />}
           label="Terms of Service"
-          onPress={() => Linking.openURL('https://salonbook.app/terms')}
+          onPress={() => Linking.openURL(`${WEB_BASE}/terms`)}
         />
         <View className="h-px bg-stone-100 mx-5" />
         <FooterLink
           icon={<Lock size={16} color="#57534e" />}
           label="Privacy Policy"
-          onPress={() => Linking.openURL('https://salonbook.app/privacy')}
+          onPress={() => Linking.openURL(`${WEB_BASE}/privacy`)}
         />
         <View className="h-px bg-stone-100 mx-5" />
         <FooterLink
           icon={<HeartHandshake size={16} color="#57534e" />}
           label="Contact Support"
-          onPress={() =>
-            Linking.openURL(
-              'https://wa.me/919999999999?text=Hi%2C%20I%20need%20help%20with%20SalonBook.',
-            )
-          }
+          onPress={() => Linking.openURL(SUPPORT_WHATSAPP)}
         />
       </View>
 
