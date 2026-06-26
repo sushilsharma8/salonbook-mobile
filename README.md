@@ -147,6 +147,7 @@ npx eas-cli@latest login
 # 2. Build an installable Android APK
 eas build --profile preview --platform android
 # (with npx: npx eas-cli@latest build --profile preview --platform android)
+npx eas-cli@latest build --profile preview --platform android
 ```
 
 When prompted on the first Android build, let EAS create a keystore. When the build finishes, open the download link on your Android phone and install the APK.
