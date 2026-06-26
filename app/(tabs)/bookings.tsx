@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, Redirect } from 'expo-router';
+import { Link } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -103,7 +103,7 @@ export default function BookingsScreen() {
   const hasReviewed = (salonId: string) => reviews.some((r) => r.salonId === salonId);
 
   if (!hydrated) return <Screen loading />;
-  if (!user || !token) return <Redirect href="/login" />;
+  if (!user || !token) return <Screen loading />;
 
   if (isLoading) return <Screen loading />;
 

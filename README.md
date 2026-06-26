@@ -130,21 +130,58 @@ components/         # Shared UI
 
 ### EAS Build & Submit
 
-> Requires `npm install -g eas-cli` and an [Expo account](https://expo.dev).
+> Requires [EAS CLI](https://docs.expo.dev/build/setup/) and an [Expo account](https://expo.dev).
+
+#### Quick start — installable Android APK on your phone
+
+Best for testing your real app icon, splash screen, and native build (not Expo Go).
+
+```bash
+# 1. Install EAS CLI and log in
+npm install -g eas-cli
+eas login
+
+# Or without a global install:
+npx eas-cli@latest login
+
+# 2. Build an installable Android APK
+eas build --profile preview --platform android
+# (with npx: npx eas-cli@latest build --profile preview --platform android)
+```
+
+When prompted on the first Android build, let EAS create a keystore. When the build finishes, open the download link on your Android phone and install the APK.
+
+The `preview` profile in `eas.json` is set to `buildType: "apk"` so builds are easy to sideload (AAB is harder to install directly).
+
+| Profile | Use case |
+|---------|----------|
+| `preview` | Install on your phone for testing (icon, splash, etc.) |
+| `development` | Dev client with hot reload (more setup) |
+| `production` | Play Store release |
+
+**Expo Go vs EAS preview build**
+
+| Approach | Best for |
+|----------|----------|
+| `npm start` + Expo Go | Fast JS/UI iteration; does not use your custom app icon |
+| `eas build --profile preview` | Full native app with your scissors icon and splash |
+
+#### All EAS commands
 
 | Command | Description |
 |---------|-------------|
+| `eas login` | Log in to your Expo account |
+| `eas whoami` | Check currently logged-in EAS account |
 | `eas build --platform ios` | Build iOS app in EAS cloud |
 | `eas build --platform android` | Build Android APK/AAB in EAS cloud |
 | `eas build --platform all` | Build both platforms |
-| `eas build --profile preview --platform android` | Build preview APK for testing |
+| `eas build --profile preview --platform android` | Build preview APK for testing on a physical device |
 | `eas build --local --platform ios` | Build locally (requires Xcode) |
 | `eas submit --platform ios` | Submit iOS build to App Store |
 | `eas submit --platform android` | Submit Android build to Play Store |
 | `eas update` | Push OTA JS update (no app store required) |
 | `eas update --branch preview` | Push update to a specific branch |
 | `eas credentials` | Manage signing credentials |
-| `eas whoami` | Check currently logged-in EAS account |
 
 ### Native / Cache
 

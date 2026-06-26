@@ -1,22 +1,22 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { LayoutDashboard, Scissors, User, Users } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/auth-store';
-import { getHomeRoute } from '@/lib/routing';
+
+function AdminGateFallback() {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fafaf9' }}>
+      <ActivityIndicator size="large" color="#1c1917" />
+    </View>
+  );
+}
 
 export default function AdminTabLayout() {
   const { user, hydrated } = useAuthStore();
 
-  if (!hydrated) {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fafaf9' }}>
-        <ActivityIndicator size="large" color="#1c1917" />
-      </View>
-    );
+  if (!hydrated || !user || user.role !== 'ADMIN') {
+    return <AdminGateFallback />;
   }
-
-  if (!user) return <Redirect href="/login" />;
-  if (user.role !== 'ADMIN') return <Redirect href={getHomeRoute(user.role)} />;
 
   return (
     <Tabs

@@ -1,11 +1,6 @@
-import { Redirect } from 'expo-router';
-import { useAuthStore } from '@/lib/auth-store';
-import { getHomeRoute } from '@/lib/routing';
+import { View } from 'react-native';
 
+// ponytail: routing lives in AuthGate (useEffect) to avoid Fabric addViewAt races from <Redirect>.
 export default function Index() {
-  const { user, hydrated } = useAuthStore();
-
-  if (!hydrated) return null;
-
-  return <Redirect href={getHomeRoute(user?.role)} />;
+  return <View style={{ flex: 1, backgroundColor: '#fafaf9' }} />;
 }

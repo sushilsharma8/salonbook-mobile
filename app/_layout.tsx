@@ -34,6 +34,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const tabSegment = root === '(tabs)' ? (segments as string[])[1] : undefined;
     const inAuthGroup = root === 'login' || root === 'register';
 
+    if (!root || root === 'index') {
+      router.replace(getHomeRoute(user?.role));
+      return;
+    }
+
     if (!user) {
       if (
         root === '(seller)' ||
@@ -104,8 +109,7 @@ export default function RootLayout() {
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <AuthGate>
-          <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fafaf9' } }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#fafaf9' } }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(seller)" />
@@ -125,6 +129,7 @@ export default function RootLayout() {
             options={{ headerShown: true, headerTintColor: '#1c1917' }}
           />
           </Stack>
+          <StatusBar style="dark" />
         </AuthGate>
       </QueryClientProvider>
     </AppErrorBoundary>

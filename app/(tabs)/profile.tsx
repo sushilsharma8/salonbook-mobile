@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActionSheetIOS, Alert, Platform, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -212,7 +212,7 @@ export default function ProfileScreen() {
   };
 
   if (!hydrated) return <Screen loading />;
-  if (!user || !token) return <Redirect href="/login" />;
+  if (!user || !token) return <Screen loading />;
 
   return (
     <Screen contentClassName="py-4">
