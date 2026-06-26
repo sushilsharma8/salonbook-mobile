@@ -1,21 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
-import { Calendar, Clock, MapPin, Share2, Star } from 'lucide-react-native';
 import { Button } from '@/components/Button';
 import { ReviewModal } from '@/components/ReviewModal';
 import { Screen } from '@/components/Screen';
 import { StatusBadge } from '@/components/StatusBadge';
 import {
-  api,
-  normalizeMyBookings,
-  type Booking,
+    api,
+    normalizeMyBookings,
+    type Booking,
 } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { bookingTimeMs, formatBookingTime, isBookingUpcoming } from '@/lib/bookingTime';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { clsx } from 'clsx';
+import * as Linking from 'expo-linking';
+import { Link, useRouter } from 'expo-router';
+import { Calendar, Clock, MapPin, Share2, Star } from 'lucide-react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 type Tab = 'upcoming' | 'past';
 

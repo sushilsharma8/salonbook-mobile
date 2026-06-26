@@ -1,9 +1,9 @@
-import { useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
-import { User } from 'lucide-react-native';
 import { Button } from '@/components/Button';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/lib/auth-store';
+import { useRouter } from 'expo-router';
+import { User } from 'lucide-react-native';
+import { Text, View } from 'react-native';
 
 export default function SellerProfileScreen() {
   const router = useRouter();

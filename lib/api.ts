@@ -1,4 +1,5 @@
 import { getDefaultApiUrl } from './theme';
+import { toReactNativeUploadFile } from './uploadImage';
 
 export type UserGender = 'MALE' | 'FEMALE' | 'OTHER';
 export type UserRole = 'CUSTOMER' | 'SELLER' | 'ADMIN';
@@ -353,7 +354,7 @@ export const api = {
 
   uploadUserAvatar: (token: string, file: { uri: string; name: string; type: string }) => {
     const formData = new FormData();
-    formData.append('avatar', { uri: file.uri, name: file.name, type: file.type } as unknown as Blob);
+    formData.append('avatar', toReactNativeUploadFile(file));
     return uploadRequest<User>('/api/users/avatar', token, formData);
   },
 
@@ -388,7 +389,7 @@ export const api = {
   ) => {
     const formData = new FormData();
     for (const file of files) {
-      formData.append('images', { uri: file.uri, name: file.name, type: file.type } as unknown as Blob);
+      formData.append('images', toReactNativeUploadFile(file));
     }
     return uploadRequest<{ urls: string[] }>('/api/seller/upload-images', token, formData);
   },

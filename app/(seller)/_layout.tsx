@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
-import { Calendar, LayoutDashboard, Share2, Store, User } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/auth-store';
+import { Tabs } from 'expo-router';
+import { Calendar, LayoutDashboard, Share2, Store, User } from 'lucide-react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 function SellerGateFallback() {
   return (

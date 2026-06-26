@@ -1,13 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { Link } from 'expo-router';
-import { AlertTriangle, Calendar, CheckCircle, Scissors } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
-import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 import { Button } from '@/components/Button';
+import { OnboardingChecklist } from '@/components/OnboardingChecklist';
 import { Screen } from '@/components/Screen';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { isBookingUpcoming, isPendingBookingActionable } from '@/lib/bookingTime';
+import { useQuery } from '@tanstack/react-query';
+import { Link } from 'expo-router';
+import { AlertTriangle, Calendar, CheckCircle, Scissors } from 'lucide-react-native';
+import { Pressable, Text, View } from 'react-native';
 
 export default function SellerDashboardScreen() {
   const token = useAuthStore((s) => s.token);

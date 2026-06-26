@@ -2,6 +2,8 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Camera, Edit2 } from 'lucide-react-native';
 import type { User } from '@/lib/api';
+import { resolveImageUrl } from '@/lib/api';
+import { getDefaultApiUrl } from '@/lib/theme';
 
 interface ProfileHeaderProps {
   user: User;
@@ -23,7 +25,9 @@ export function ProfileHeader({
   avatarUploading = false,
 }: ProfileHeaderProps) {
   const dicebearUrl = `https://api.dicebear.com/7.x/avataaars/png?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
-  const photoUrl = user.avatarUrl || dicebearUrl;
+  const photoUrl = user.avatarUrl
+    ? resolveImageUrl(getDefaultApiUrl(), user.avatarUrl)
+    : dicebearUrl;
 
   return (
     <View className="bg-white rounded-3xl border border-stone-200/60 overflow-hidden mb-4">

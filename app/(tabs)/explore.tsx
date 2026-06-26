@@ -1,12 +1,12 @@
+import { SalonCard } from '@/components/SalonCard';
+import { api } from '@/lib/api';
+import { CATEGORIES } from '@/lib/categories';
 import { useQuery } from '@tanstack/react-query';
+import { clsx } from 'clsx';
+import { Search } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search } from 'lucide-react-native';
-import { SalonCard } from '@/components/SalonCard';
-import { CATEGORIES } from '@/lib/categories';
-import { api } from '@/lib/api';
-import { clsx } from 'clsx';
 
 export default function ExploreScreen() {
   const [searchQuery, setSearchQuery] = useState('');

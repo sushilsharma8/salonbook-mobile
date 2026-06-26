@@ -1,6 +1,6 @@
+import { useAuthStore } from '@/lib/auth-store';
 import { Tabs, useRouter } from 'expo-router';
 import { Calendar, Search, User } from 'lucide-react-native';
-import { useAuthStore } from '@/lib/auth-store';
 
 export default function TabLayout() {
   const router = useRouter();

@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
-import { Text, View } from 'react-native';
-import { ShieldCheck, Sparkles, Scissors } from 'lucide-react-native';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Screen } from '@/components/Screen';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth-store';
 import { getHomeRoute } from '@/lib/routing';
+import { Link, useRouter } from 'expo-router';
+import { Scissors, ShieldCheck, Sparkles } from 'lucide-react-native';
+import { useState } from 'react';
+import { Text, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();

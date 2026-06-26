@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
-import { LayoutDashboard, Scissors, User, Users } from 'lucide-react-native';
 import { useAuthStore } from '@/lib/auth-store';
+import { Tabs } from 'expo-router';
+import { LayoutDashboard, Scissors, User, Users } from 'lucide-react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 function AdminGateFallback() {
   return (

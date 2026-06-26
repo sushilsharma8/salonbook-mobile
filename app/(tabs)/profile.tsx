@@ -1,21 +1,21 @@
+import { Button } from '@/components/Button';
+import { Screen } from '@/components/Screen';
+import { AppFooter } from '@/components/profile/AppFooter';
+import { EditProfileCard } from '@/components/profile/EditProfileCard';
+import { PreferencesSection } from '@/components/profile/PreferencesSection';
+import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { QuickActions } from '@/components/profile/QuickActions';
+import { RecentlyVisited } from '@/components/profile/RecentlyVisited';
+import { StatsCard } from '@/components/profile/StatsCard';
+import { api, ApiError, normalizeMyBookings, type User } from '@/lib/api';
+import { useAuthStore } from '@/lib/auth-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActionSheetIOS, Alert, Platform, Text, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { Button } from '@/components/Button';
-import { Screen } from '@/components/Screen';
-import { ProfileHeader } from '@/components/profile/ProfileHeader';
-import { QuickActions } from '@/components/profile/QuickActions';
-import { EditProfileCard } from '@/components/profile/EditProfileCard';
-import { PreferencesSection } from '@/components/profile/PreferencesSection';
-import { StatsCard } from '@/components/profile/StatsCard';
-import { RecentlyVisited } from '@/components/profile/RecentlyVisited';
-import { AppFooter } from '@/components/profile/AppFooter';
-import { api, ApiError, normalizeMyBookings, type User } from '@/lib/api';
-import { useAuthStore } from '@/lib/auth-store';
 
 const AVATAR_SEED_KEY = 'salonbook_avatar_seed';
 const PREFS_KEY = 'salonbook_prefs';
@@ -106,20 +106,29 @@ export default function ProfileScreen() {
       if (pickerResult.canceled || !pickerResult.assets?.length) return;
 
       const asset = pickerResult.assets[0];
+      const uploadName = asset.fileName || `avatar-${Date.now()}.jpg`;
+      const uploadType = asset.mimeType || 'image/jpeg';
 
       setAvatarUploading(true);
       try {
-        // Resize + compress to max 512px, JPEG 0.7 quality
-        const manipulated = await ImageManipulator.manipulateAsync(
-          asset.uri,
-          [{ resize: { width: 512, height: 512 } }],
-          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG },
-        );
+        let uploadUri = asset.uri;
+        let uploadTypeFinal = uploadType;
+        try {
+          const manipulated = await manipulateAsync(
+            asset.uri,
+            [{ resize: { width: 512 } }],
+            { compress: 0.7, format: SaveFormat.JPEG },
+          );
+          uploadUri = manipulated.uri;
+          uploadTypeFinal = 'image/jpeg';
+        } catch {
+          // ponytail: skip resize if manipulator fails; upload original picker asset
+        }
 
         const updated = await api.uploadUserAvatar(token, {
-          uri: manipulated.uri,
-          name: `avatar-${Date.now()}.jpg`,
-          type: 'image/jpeg',
+          uri: uploadUri,
+          name: uploadName.endsWith('.jpg') || uploadName.endsWith('.jpeg') ? uploadName : `${uploadName}.jpg`,
+          type: uploadTypeFinal,
         });
 
         await setAuth(updated, token);
